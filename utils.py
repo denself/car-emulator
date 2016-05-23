@@ -4,6 +4,8 @@ from geopy.distance import great_circle
 
 
 class GeoPoint(object):
+    d = 0.000001
+
     def __init__(self, latitude=0., longitude=0.):
         self.latitude = latitude
         self.longitude = longitude
@@ -32,12 +34,16 @@ class GeoPoint(object):
             'coordinates': [self.longitude, self.latitude]
         }
 
+    def to_feature(self):
+        return {
+            'type': 'Feature',
+            'geometry': self.to_dict()
+        }
+
     @classmethod
     def from_dict(cls, data):
         assert data['type'] == 'Point'
-        point = cls()
-        point.latitude = data['latitude']
-        point.longitude = data['longitude']
+        return cls.from_reversed(*data['coordinates'])
 
     def __sub__(self, other):
         """
@@ -53,6 +59,10 @@ class GeoPoint(object):
         _point = great_circle().destination(self.get_lat_lon(),
                                             other.heading, other.value)
         return GeoPoint(_point.latitude, _point.longitude)
+
+    def __eq__(self, other):
+        return (abs(self.latitude - other.latitude) < self.d) and \
+               (abs(self.longitude - other.longitude) < self.d)
 
     def __str__(self):
         return 'GeoPoint({:.6f}, {:.6f})'.format(*self.get_lat_lon())
@@ -71,6 +81,49 @@ class GeoVector(object):
         return self.value * 1000
 
 
+class GeoLine(object):
+    def __init__(self):
+        self._points = []
+        self._pointer = 0
+
+    def __nonzero__(self):
+        return len(self._points) > self._pointer
+
+    def get(self, i=0):
+        return GeoPoint.from_reversed(*self._points[self._pointer + i])
+
+    def pop_next(self):
+        res = self.get()
+        self._pointer += 1
+        return res
+
+    def to_dict(self):
+        return {
+            'type': 'LineString',
+            'coordinates': self._points
+        }
+
+    def to_feature(self):
+        return {
+            'type': 'Feature',
+            'geometry': self.to_dict()
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        assert data['type'] == 'LineString'
+        line = cls()
+        line._points = data['coordinates'][:]
+        return line
+
+    @classmethod
+    def from_feature(cls, data):
+        assert data['type'] == 'Feature'
+        return cls.from_dict(data['geometry'])
+
+    def __str__(self):
+        return "GeoLine({}..)".format(self.get())
+
 
 def bearing(point1, point2):
     d_lon = point2.lon_rad - point1.lon_rad
@@ -79,18 +132,17 @@ def bearing(point1, point2):
     x = math.cos(point1.lat_rad) * math.sin(point2.lat_rad) - \
         math.sin(point1.lat_rad) * math.cos(point2.lat_rad) * math.cos(d_lon)
 
-    brng = math.atan2(y, x)
-    return math.degrees(brng)
+    return math.degrees(math.atan2(y, x))
 
 
 def to_hours(seconds):
     return seconds / (60. * 60.)
 
+
 if __name__ == '__main__':
-    p1 = GeoPoint(50.443622, 30.512418)
-    p2 = GeoPoint(50.445727, 30.515208)
-    print p1
-    print p2
-    v1 = p2 - p1
-    print v1
-    print p1 + v1
+    path = GeoLine()
+    path._points = [(50.412277, 30.443422),
+                    (50.349110, 30.897184),
+                    (50.450115, 30.524245)]
+    for i in range(10):
+        print path.get()

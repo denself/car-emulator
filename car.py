@@ -1,74 +1,52 @@
-import json
-
-from twisted.internet import reactor
-
 from interfaces import ICar, IUpdatable
-from utils import GeoPoint, to_hours
+from navigator import Navigator
+from utils import to_hours, GeoVector
 
-KYIV = 50.450115, 30.524245
+MAIDAN = 50.450115, 30.524245
+TROYESHCHYNA = 50.516808, 30.600352
+VINOGRADAR = 50.516236, 30.419813
+MARMELAD = 50.445934, 30.442697
 
 
 class Car(ICar, IUpdatable):
-    def __init__(self, points):
-        """
-        :type points: list
-        """
-        self.speed = 60
-        self.heading = 0
-        self.points = [GeoPoint.from_reversed(*p) for p in points]
-        self.location = self.points.pop(0)
+    def __init__(self, vin):
+        self._vin = vin
+        self._navigator = Navigator(vin)
+        self._speed = 60
+        self._heading = 0
         self._mileage = 0
-        self._saver = CarSaver(self)
 
     def get_heading(self):
-        return self.heading
+        return self._heading
 
     def get_speed(self):
-        return self.speed
+        return self._speed
 
     def get_location(self):
-        return self.location
+        return self._navigator.get_location()
 
     def get_odometer_value(self):
         return self._mileage
 
     def update(self, t):
         self._move(to_hours(t))
-        # print '{:.6f}, {:.6f}'.format(*self.location.get_coords())
 
     def _move(self, t):
-        if not self.points:
-            return
+        potential_distance = t * self._speed
 
-        potential_distance = t * self.speed
-        vector_to_point = self.points[0] - self.location
+        while not self._navigator.is_arrived():
+            old_location = self._navigator.get_location()
+            next_point = self._navigator.get_next_point()
 
-        while potential_distance >= vector_to_point.value:
-            self.location = self.points.pop(0)
-            if not self.points:
-                return
+            vector_to_point = next_point - old_location
+            self._heading = vector_to_point.heading % 360
+
+            if potential_distance < vector_to_point.value:
+                potential_vector = GeoVector(potential_distance,
+                                             vector_to_point.heading)
+                new_location = old_location + potential_vector
+                self._navigator.set_location(new_location)
+                break
+
             potential_distance -= vector_to_point.value
-            vector_to_point = self.points[0] - self.location
-
-        vector_to_point.value = potential_distance
-        self.location = self.location + vector_to_point
-        self.heading = vector_to_point.heading
-
-
-class CarSaver(object):
-    period = 5
-
-    def __init__(self, car):
-        """
-        :type car: Car
-        """
-        self._car = car
-
-    def save(self):
-        point = self._car.get_location()
-        with open('data/{}.json'.format('111'), 'w') as f:
-            json.dump(point.to_dict(), f)
-        self.call_later()
-
-    def call_later(self):
-        reactor.callLater(self.period, self.save)
+            self._navigator.pop_next_point()

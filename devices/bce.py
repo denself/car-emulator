@@ -18,7 +18,7 @@ import time
 class BCE(object):
 
     port = 9004
-    host = 'localhost'
+    host = 'dev.mobiliuz.com'
     HANDSHAKE = "#BCE#\r\n"
 
     def __init__(self, imei):
@@ -101,7 +101,7 @@ class BCEDataType7Mask1(object):
             gps_quality <<= 4
             gps_quality += data.get('satellites', 0) & 0xf
             result += struct.pack('B', gps_quality)
-            result += struct.pack('B', data.get('heading', 0) / 2)
+            result += struct.pack('B', int(data.get('heading', 0) / 2))
             result += struct.pack('h', data.get('altitude', 0))
             result += struct.pack('f', data.get('odometer', 0))
             mask |= 1

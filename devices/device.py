@@ -70,6 +70,7 @@ class Device(ClientFactory, IUpdatable):
         self.data['hdop'] = 1
         self.data['satellites'] = 12
         self.data['odometer'] = path.meters
+        self.data['heading'] = self.car.get_heading()
         self.last_point = car_position
 
     def push_data(self):
@@ -80,9 +81,3 @@ class Device(ClientFactory, IUpdatable):
     def send_data(self):
         self.transport.send_data(self.stack)
         self.last_send_time = time.time()
-
-    def get_factory(self):
-
-        factory = type('Factory', (ClientFactory,), {'protocol': self.parser})
-
-        return factory()

@@ -9,8 +9,7 @@ from loop import Loop
 
 
 def main():
-    points = json.load(open('path2.geojson'))['coordinates']
-    car = Car(points)
+    car = Car('111')
     device = Device()
     device.connect_to_car(car)
 

@@ -14,7 +14,7 @@ class Transport(Protocol):
     def send_data(self, data):
         if self._connected:
             package = self.parser.dump(data)
-            # self.transport.write(package)
+            self.transport.write(package)
 
     def connectionMade(self):
         self.transport.write(self.parser.HANDSHAKE)

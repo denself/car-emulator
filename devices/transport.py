@@ -1,39 +1,63 @@
 from twisted.internet import reactor
-from twisted.internet.protocol import Protocol, connectionDone, ClientFactory
+from twisted.internet.protocol import Protocol, ReconnectingClientFactory
+from twisted.python import log
 
 
 class Transport(Protocol):
-    reconnect_period = 10
 
-    def __init__(self, parser):
-        self.parser = parser
+    def __init__(self, handshake):
         self._connected = False
-        self._factory = TransportFactory(self)
-        reactor.callLater(0.1, self.connect)
+        self._handshake = handshake
 
     def send_data(self, data):
         if self._connected:
-            package = self.parser.dump(data)
-            self.transport.write(package)
+            self.transport.write(data)
 
     def connectionMade(self):
-        self.transport.write(self.parser.HANDSHAKE)
+        self.transport.write(self._handshake)
         self._connected = True
 
     def dataReceived(self, data):
-        print 'Received: {}'.format(data)
+        log.msg('Received: {}'.format(data))
 
-    def connectionLost(self, reason=connectionDone):
+    def connectionLost(self, reason=None):
         self._connected = False
-        reactor.callLater(self.reconnect_period, self.connect)
-
-    def connect(self):
-        reactor.connectTCP(self.parser.host, self.parser.port, self._factory)
 
 
-class TransportFactory(ClientFactory):
-    def __init__(self, transport):
-        self.transport = transport
+class TransportFactory(ReconnectingClientFactory):
+    maxDelay = 60
+
+    def __init__(self, parser):
+        self.parser = parser
+        self.transport = None
+        reactor.callLater(1, self.connect)
+
+    def send(self, data):
+        package = self.parser.dump(data)
+        self.transport.send_data(package)
 
     def buildProtocol(self, addr):
+        log.msg('Connection established')
+        self.resetDelay()
+        self.transport = Transport(self.parser.HANDSHAKE)
         return self.transport
+
+    def clientConnectionFailed(self, connector, reason):
+        log.msg('Connection failed: {}. Reconnecting in {}'
+                ''.format(reason, self.delay))
+        self.transport = None
+        ReconnectingClientFactory \
+            .clientConnectionFailed(self, connector, reason)
+
+    def clientConnectionLost(self, connector, reason):
+        log.msg('Connection lost: {}. Reconnecting in {}.'
+                ''.format(reason, self.delay))
+        self.transport = None
+        ReconnectingClientFactory \
+            .clientConnectionLost(self, connector, reason)
+
+    def startedConnecting(self, connector):
+        log.msg('Connection started')
+
+    def connect(self):
+        reactor.connectTCP(self.parser.host, self.parser.port, self)

@@ -3,7 +3,7 @@ import time
 from twisted.internet.protocol import ClientFactory, Protocol
 
 from devices.bce import BCE
-from devices.transport import Transport
+from devices.transport import Transport, TransportFactory
 from interfaces import IUpdatable
 
 
@@ -23,7 +23,7 @@ class Device(ClientFactory, IUpdatable):
         self.last_push_time = time.time()
         self.last_point = None
         self.stack = []
-        self.transport = Transport(protocol(imei))
+        self.transport = TransportFactory(protocol(imei))
 
     def connect_to_car(self, car):
         """
@@ -79,5 +79,5 @@ class Device(ClientFactory, IUpdatable):
         self.last_push_time = time.time()
 
     def send_data(self):
-        self.transport.send_data(self.stack)
+        self.transport.send(self.stack)
         self.last_send_time = time.time()

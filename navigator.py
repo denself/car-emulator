@@ -2,6 +2,7 @@ import json
 import os
 import random
 
+import datetime
 from mapbox import Directions
 from twisted.internet import reactor
 from twisted.python import log
@@ -77,8 +78,9 @@ class Navigator(object):
             self._path = GeoLine.from_dict(path['geometry'])
             props = path['properties']
             self.log.msg(
-                'Path built. Distance: {:2f} km, duration: {:2f} min'
-                ''.format(props['distance'] / 1000., props['duration'] / 60.))
+                'Path built. Distance: {:.2f} km, duration: {:.2f} min'
+                ''.format(props['distance'] / 1000.,
+                          datetime.timedelta(seconds=props['duration'])))
 
     @staticmethod
     def get_random_location():
@@ -114,6 +116,7 @@ class LocationSaver(object):
         """
         :rtype: utils.GeoPoint
         """
+        self.call_later()
         if os.path.exists(self._get_filename()):
             try:
                 with open(self._get_filename(), 'r') as f:

@@ -1,6 +1,6 @@
 from interfaces import ICar, IUpdatable
 from navigator import Navigator
-from utils import to_hours, GeoVector
+from utils.geo import to_hours, GeoVector
 
 MAIDAN = 50.450115, 30.524245
 TROYESHCHYNA = 50.516808, 30.600352

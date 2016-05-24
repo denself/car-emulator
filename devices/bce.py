@@ -115,7 +115,7 @@ if __name__ == '__main__':
         'latitude': 12.34,
         'longitude': 34.56
     }
-    b = BCE()
-    b.add_message(dt)
-    res = BCE.dump('351777042773935')
+    b = BCE('351777042773935')
+    # b.add_message(dt)
+    res = BCE.dump(dt)
     print res.encode('hex')

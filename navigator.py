@@ -7,7 +7,7 @@ from mapbox import Directions
 from twisted.internet import reactor
 from twisted.python import log
 
-from utils import GeoLine, GeoPoint
+from utils.geo import GeoLine, GeoPoint
 
 ZHULYANY = GeoPoint(50.412277, 30.443422)
 BORYSPIL = GeoPoint(50.349110, 30.897184)
@@ -78,7 +78,7 @@ class Navigator(object):
             self._path = GeoLine.from_dict(path['geometry'])
             props = path['properties']
             self.log.msg(
-                'Path built. Distance: {:.2f} km, duration: {:.2f} min'
+                'Path built. Distance: {:.2f} km, duration: {}'
                 ''.format(props['distance'] / 1000.,
                           datetime.timedelta(seconds=props['duration'])))
 

@@ -1,13 +1,11 @@
 import time
 
-from twisted.internet.protocol import ClientFactory, Protocol
-
 from devices.bce import BCE
-from devices.transport import Transport, TransportFactory
+from transport.twstd import TransportFactory
 from interfaces import IUpdatable
 
 
-class Device(ClientFactory, IUpdatable):
+class Device(IUpdatable):
 
     sending_period = 5
     pushing_period = 5

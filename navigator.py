@@ -7,23 +7,11 @@ from mapbox import Directions
 from twisted.internet import reactor
 from twisted.python import log
 
+import settings
+from utils.data import load_locations
 from utils.geo import GeoLine, GeoPoint
 
-ZHULYANY = GeoPoint(50.412277, 30.443422)
-BORYSPIL = GeoPoint(50.349110, 30.897184)
-KYIV = GeoPoint(50.450115, 30.524245)
-TROYESHCHYNA = GeoPoint(50.516808, 30.600352)
-VINOGRADAR = GeoPoint(50.516236, 30.419813)
-MARMELAD = GeoPoint(50.445934, 30.442697)
-RAILROAD = GeoPoint(50.440756, 30.490026)
-BEERWOOD = GeoPoint(50.481086, 30.454878)
-BOT_GARDEN = GeoPoint(50.415400, 30.556502)
-DARNYTSIA = GeoPoint(50.430836, 30.648600)
-BUS_STATION = GeoPoint(50.406793, 30.519341)
-VDNH = GeoPoint(50.379930, 30.477425)
-
-locations = [ZHULYANY, BORYSPIL, KYIV, TROYESHCHYNA, VINOGRADAR, MARMELAD,
-             RAILROAD, BEERWOOD, BOT_GARDEN, DARNYTSIA, BUS_STATION, VDNH]
+locations = load_locations(settings.POINTS_FILE)
 
 
 class Navigator(object):
@@ -35,9 +23,9 @@ class Navigator(object):
         self.vin = vin
         self.log = log
         self._saver = LocationSaver(self)
-        self._location = self._saver.load()
+        self._location = self._saver.load() or self.get_random_location()
         self._path = GeoLine()
-        reactor.callLater(15, self.build_path)
+        reactor.callLater(5, self.build_path)
 
     def get_location(self):
         """
@@ -124,7 +112,6 @@ class LocationSaver(object):
                 return GeoPoint.from_dict(data)
             finally:
                 pass
-        return KYIV
 
     def save(self):
         point = self.obj.get_location()

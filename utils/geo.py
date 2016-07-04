@@ -31,7 +31,7 @@ class GeoPoint(object):
     def to_dict(self):
         return {
             'type': 'Point',
-            'coordinates': [self.longitude, self.latitude]
+            'coordinates': self.get_lon_lat()
         }
 
     def to_feature(self):

@@ -1,7 +1,7 @@
 import json
 import sys
 
-from twisted.python import log, logfile
+from twisted.python import log
 
 import settings
 from car import Car
@@ -22,9 +22,7 @@ def main():
         loop.add_object(car)
         loop.add_object(device)
 
-    log_file = logfile.LogFile('out.log', settings.LOGS_DIR,
-                               maxRotatedFiles=10)
-    log.startLogging(log_file)
+    log.startLogging(sys.stdout)
     log.msg('Starting reactor')
 
     loop.start()

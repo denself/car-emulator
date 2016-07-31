@@ -5,7 +5,9 @@ from twisted.python import log
 
 import settings
 from car import Car
+from devices.bce import BCE
 from devices.device import Device
+from devices.ips import IPS
 from loop import Loop
 
 
@@ -16,7 +18,7 @@ def main():
         data = json.load(f)
     for item in data:
         car = Car(item["VIN"])
-        device = Device(imei=item["IMEI"])
+        device = Device(imei=item["IMEI"], protocol=IPS)
         device.connect_to_car(car)
 
         loop.add_object(car)

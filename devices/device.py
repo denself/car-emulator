@@ -10,15 +10,15 @@ class Device(IUpdatable):
     sending_period = 5
     pushing_period = 5
 
-    def __init__(self, imei='350000000000035', protocol=BCE):
+    def __init__(self, imei, protocol=BCE):
         """
         :type self.last_point: utils.GeoPoint
         """
         self.car = None
         self.imei = imei
         self.data = {}
-        self.last_send_time = time.time()
-        self.last_push_time = time.time()
+        self.last_send_time = time.time() + 1
+        self.last_push_time = time.time() + 1
         self.last_point = None
         self.stack = []
         self.transport = TransportFactory(protocol(imei))
@@ -77,5 +77,6 @@ class Device(IUpdatable):
         self.last_push_time = time.time()
 
     def send_data(self):
-        self.transport.send(self.stack)
-        self.last_send_time = time.time()
+        if self.transport.is_connected:
+            self.transport.send(self.stack)
+            self.last_send_time = time.time()

@@ -25,6 +25,9 @@ class BCE(object):
         self._confirmation_key = -1
         self.imei = imei
 
+    def get_handshake(self):
+        return self.HANDSHAKE
+
     def dump(self, data):
         result = struct.pack('L', int(self.imei))
 

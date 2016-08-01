@@ -18,11 +18,11 @@ class Transport(Protocol):
         self._connected = True
 
     def write(self, data):
-        log.msg("Sending data: {}".format(data))
+        log.msg("Sending data: {}".format(data.encode('hex')))
         self.transport.write(data)
 
     def dataReceived(self, data):
-        log.msg('Received: {}'.format(data))
+        log.msg('Received: {}'.format(data.encode('hex')))
 
     def connectionLost(self, reason=None):
         self._connected = False

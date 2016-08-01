@@ -9,9 +9,9 @@ MARMELAD = 50.445934, 30.442697
 
 
 class Car(ICar, IUpdatable):
-    def __init__(self, vin):
+    def __init__(self, vin, city):
         self._vin = vin
-        self._navigator = Navigator(vin)
+        self._navigator = Navigator(vin, city)
         self._speed = 60
         self._heading = 0
         self._mileage = 0

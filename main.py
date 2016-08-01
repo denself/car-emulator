@@ -17,8 +17,9 @@ def main():
     with open(settings.CARS_FILE) as f:
         data = json.load(f)
     for item in data:
-        car = Car(item["VIN"])
-        device = Device(imei=item["IMEI"], protocol=IPS)
+        city = item.get('city', 'points')
+        car = Car(item["VIN"], city)
+        device = Device(imei=item["IMEI"], protocol=BCE)
         device.connect_to_car(car)
 
         loop.add_object(car)

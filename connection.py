@@ -1,4 +1,5 @@
 from twisted.internet import protocol, reactor
+from twisted.python import log
 
 
 class Client(protocol.Protocol):
@@ -6,7 +7,7 @@ class Client(protocol.Protocol):
         self.transport.write(b'Hello, world')
 
     def dataReceived(self, data):
-        print('Received: {}'.format(data))
+        log.msg('Received: {}'.format(data))
         self.transport.loseConnection()
 
 

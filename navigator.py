@@ -11,18 +11,17 @@ import settings
 from utils.data import load_locations
 from utils.geo import GeoLine, GeoPoint
 
-locations = load_locations(settings.POINTS_FILE)
-
 
 class Navigator(object):
 
     profile = 'mapbox.driving'
 
-    def __init__(self, vin):
+    def __init__(self, vin, city):
         self.service = Directions()
         self.vin = vin
         self.log = log
         self._saver = LocationSaver(self)
+        self._locations = load_locations(city)
         self._location = self._saver.load() or self.get_random_location()
         self._path = GeoLine()
         reactor.callLater(5, self.build_path)
@@ -70,9 +69,8 @@ class Navigator(object):
                 ''.format(props['distance'] / 1000.,
                           datetime.timedelta(seconds=props['duration'])))
 
-    @staticmethod
-    def get_random_location():
-        return random.choice(locations)
+    def get_random_location(self):
+        return random.choice(self._locations)
 
     def is_arrived(self):
         return not self._path

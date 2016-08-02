@@ -73,7 +73,7 @@ class Car(ICar, IUpdatable):
     def _update_refuel(self):
         if self._fuel_level <= 5.:
             free_value = self._tank_value - self._fuel_level
-            self._fuel_level += random.randint(0.5 * free_value, free_value)
+            self._fuel_level += random.randint(int(0.5 * free_value), int(free_value))
 
     def _move(self, t):
         """

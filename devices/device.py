@@ -69,6 +69,8 @@ class Device(IUpdatable):
         self.data['satellites'] = 12
         self.data['odometer'] = path.meters
         self.data['heading'] = self.car.get_heading()
+        self.data['fuel_level_liters'] = self.car.get_fuel_level()
+        self.data['fuel_level_percent'] = self.car.get_fuel_level_rel()
         self.last_point = car_position
 
     def push_data(self):

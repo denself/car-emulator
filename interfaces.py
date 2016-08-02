@@ -25,7 +25,7 @@ class ILoop(object):
 class IUpdatable(object):
     def update(self, t):
         """
-        :param t: Time, passed since last update
+        :param t: Time, passed since last update in seconds
         :type t: float
         """
         raise NotImplementedError
@@ -34,16 +34,16 @@ class IUpdatable(object):
 class ICar(object):
     def get_speed(self):
         """
-        Get value of car's heading
-        :return: Value of car's heading
+        Get value of car's speed
+        :return: Value of car's speed
         :rtype: float
         """
         raise NotImplementedError
 
     def get_heading(self):
         """
-        Get value of car's speed
-        :return: Value of car's speed
+        Get value of car's heading
+        :return: Value of car's heading in degrees 0 .. 359.9
         :rtype: float
         """
         raise NotImplementedError
@@ -51,12 +51,20 @@ class ICar(object):
     def get_location(self):
         """
         Get current car's location
-        :return: Value of car's speed
+        :return: Value of car's location
         :rtype: utils.GeoPoint
         """
         raise NotImplementedError
 
     def get_odometer_value(self):
+        """
+        Get path length since previous point
+        :return: Odometers value
+        :rtype: float
+        """
+        raise NotImplementedError
+
+    def get_full_mileage(self):
         """
         Get path length since start of car
         :return: Value of car's mileage

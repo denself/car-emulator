@@ -13,3 +13,5 @@ CARS_FILE = os.path.join(DATA_DIR, 'cars.json')
 LOGS_DIR = os.path.join(BASE_DIR, 'logs')
 if not os.path.isdir(LOGS_DIR):
     os.mkdir(LOGS_DIR)
+
+context = 'default'

@@ -70,14 +70,17 @@ class GeoPoint(object):
 
 class GeoVector(object):
     def __init__(self, value=0., heading=0.):
-        self.value = value
-        self.heading = heading
+        self.value = value  # vector length in km
+        self.heading = heading  # vector angle in degrees
 
     def __str__(self):
         return 'GeoVector({:.6f}, {:.4f})'.format(self.value, self.heading)
 
     @property
     def meters(self):
+        """
+        :return: Get vector length in meters (m)
+        """
         return self.value * 1000
 
 

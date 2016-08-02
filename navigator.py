@@ -1,5 +1,3 @@
-import json
-import os
 import random
 
 import datetime
@@ -7,24 +5,20 @@ from mapbox import Directions
 from twisted.internet import reactor
 from twisted.python import log
 
-import settings
 from utils.data import load_locations
-from utils.geo import GeoLine, GeoPoint
+from utils.geo import GeoLine
 
 
 class Navigator(object):
 
     profile = 'mapbox.driving'
 
-    def __init__(self, vin, city):
+    def __init__(self, city, location):
         self.service = Directions()
-        self.vin = vin
         self.log = log
-        self._saver = LocationSaver(self)
         self._locations = load_locations(city)
-        self._location = self._saver.load() or self.get_random_location()
+        self._location = location or self.get_random_location()
         self._path = GeoLine()
-        reactor.callLater(5, self.build_path)
 
     def get_location(self):
         """
@@ -42,13 +36,13 @@ class Navigator(object):
         """
         :param point_to: Destination point
         :type point_to: utils.GeoPoint
-        :return: GeoJson
-        :rtype: dict
+        :return: Whethr path built successfully
+        :rtype: bool
         """
         origin = self._location.to_feature()
         if not point_to:
             point_to = self.get_random_location()
-        self.log.msg('Building path to {}'.format(point_to))
+        self.log.msg('Building path {} to {}'.format(self._location, point_to))
         destination = point_to.to_feature()
 
         response = self.service.directions([origin, destination],
@@ -59,15 +53,16 @@ class Navigator(object):
             self.log.msg('Failed to build path: {}. '
                          'Next attempt after 5 minutes.'
                          ''.format(response.content))
-            reactor.callLater(300, self.build_path)
-        else:
-            path = response.geojson()['features'][0]
-            self._path = GeoLine.from_dict(path['geometry'])
-            props = path['properties']
-            self.log.msg(
-                'Path built. Distance: {:.2f} km, duration: {}'
-                ''.format(props['distance'] / 1000.,
-                          datetime.timedelta(seconds=props['duration'])))
+            return False
+
+        path = response.geojson()['features'][0]
+        self._path = GeoLine.from_dict(path['geometry'])
+        props = path['properties']
+        self.log.msg(
+            'Path built. Distance: {:.2f} km, duration: {}'
+            ''.format(props['distance'] / 1000.,
+                      datetime.timedelta(seconds=props['duration'])))
+        return True
 
     def get_random_location(self):
         return random.choice(self._locations)
@@ -81,45 +76,7 @@ class Navigator(object):
     def pop_next_point(self):
         point = self._path.pop_next()
         self.set_location(point)
-        if not self._path:
-            reactor.callLater(300, self.build_path)
         return point
-
-
-class LocationSaver(object):
-    period = 5
-
-    def __init__(self, obj):
-        """
-        :type obj: Navigator
-        """
-        self.obj = obj
-
-    def _get_filename(self):
-        return 'data/{}.json'.format(self.obj.vin)
-
-    def load(self):
-        """
-        :rtype: utils.GeoPoint
-        """
-        self.call_later()
-        if os.path.exists(self._get_filename()):
-            try:
-                with open(self._get_filename(), 'r') as f:
-                    data = json.load(f)
-                return GeoPoint.from_dict(data)
-            finally:
-                pass
-
-    def save(self):
-        point = self.obj.get_location()
-        data = point.to_dict()
-        with open(self._get_filename(), 'w') as f:
-            json.dump(data, f)
-        self.call_later()
-
-    def call_later(self):
-        reactor.callLater(self.period, self.save)
 
 
 if __name__ == '__main__':

@@ -6,7 +6,7 @@ from interfaces import ILoop
 
 
 class Loop(ILoop):
-    period = 0.1
+    period = 0.1  # Time to start server in s.
 
     def __init__(self):
         self.objects = []
@@ -26,6 +26,7 @@ class Loop(ILoop):
         Process update method of all objects
         """
         now = time.time()
+        # Time between ticks in seconds
         t = now - self.last_update
 
         for o in self.objects:

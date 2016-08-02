@@ -85,12 +85,6 @@ class BCEMessageData(object):
         return struct.pack('B', message_length) + result
 
 
-class BCEDataType7(object):
-    @staticmethod
-    def dump(data):
-        return BCEDataType7Mask1.dump(data)
-
-
 class BCEDataType7Mask1(object):
     @staticmethod
     def dump(data):
@@ -107,9 +101,56 @@ class BCEDataType7Mask1(object):
             result += struct.pack('B', int(data.get('heading', 0) / 2))
             result += struct.pack('h', data.get('altitude', 0))
             result += struct.pack('f', data.get('odometer', 0))
-            mask |= 1
+            mask |= 0b0000000000000001
 
-        return struct.pack('H', mask) + result
+        return mask, result
+
+
+class BCEDataType7Mask2(object):
+    @staticmethod
+    def dump(data):
+        mask = 0
+        result = ''
+        if data.get('fuel_level_percent', 0):
+            fuel_level_percent = data.get('fuel_level_percent', 0) / 0.4
+            result += struct.pack('B', int(fuel_level_percent))
+            mask |= 0b0000000000001000
+
+        return mask, result
+
+
+class BCEDataType7Mask3(object):
+    @staticmethod
+    def dump(data):
+        mask = 0
+        result = ''
+        return mask, result
+
+
+class BCEDataType7Mask4(object):
+    @staticmethod
+    def dump(data):
+        mask = 0
+        result = ''
+        return mask, result
+
+
+class BCEDataType7(object):
+    masks = [BCEDataType7Mask4, BCEDataType7Mask3,
+             BCEDataType7Mask2, BCEDataType7Mask1]
+
+    @classmethod
+    def dump(cls, data):
+        masks = ''
+        result = ''
+        for m in cls.masks:
+            mask, pkg = m.dump(data)
+            if masks:
+                mask |= 0b1000000000000000
+            if mask:
+                masks = struct.pack('H', mask) + masks
+                result = pkg + result
+        return masks + result
 
 
 if __name__ == '__main__':
@@ -120,5 +161,5 @@ if __name__ == '__main__':
     }
     b = BCE('351777042773935')
     # b.add_message(dt)
-    res = BCE.dump(dt)
+    res = b.dump(dt)
     print res.encode('hex')

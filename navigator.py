@@ -2,7 +2,6 @@ import random
 
 import datetime
 from mapbox import Directions
-from twisted.internet import reactor
 from twisted.python import log
 
 from utils.data import load_locations

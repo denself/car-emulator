@@ -8,6 +8,7 @@ from twisted.python import log
 from interfaces import ICar, IUpdatable
 from navigator import Navigator
 from utils.geo import to_hours, GeoVector, GeoPoint
+from utils.helpers import to_meters_per_second, to_liters_per_meter
 
 
 class Car(ICar, IUpdatable):
@@ -17,13 +18,13 @@ class Car(ICar, IUpdatable):
         self._saver = CarSaver(vin, self)
         data = self._saver.load()
         self._navigator = Navigator(city, data.get('position'))
-        self._max_speed = 60
+        self._max_speed = to_meters_per_second(60)
         self._speed = 0
         self._heading = data.get('heading', 0)
         self._mileage = data.get('mileage', 0)
         self._tank_value = 50.
         self._fuel_level = data.get('fuel_level', self._tank_value)
-        self._fuel_speed = .12  # liters / 1km
+        self._fuel_speed = to_liters_per_meter(12)
         reactor.callLater(3, self._start)
 
     def get_heading(self):
@@ -49,7 +50,7 @@ class Car(ICar, IUpdatable):
 
     def update(self, t):
         if not self._navigator.is_arrived():
-            path = self._move(to_hours(t))
+            path = self._move(t)
             self._update_fuel(path)
 
     def _get_fuel_speed(self):
@@ -61,7 +62,7 @@ class Car(ICar, IUpdatable):
 
     def _update_fuel(self, path):
         """
-        :param path: length on moved path in km
+        :param path: length on moved path in m
         """
         # Fuel spent in liters
         value = path * self._get_fuel_speed()
@@ -77,11 +78,10 @@ class Car(ICar, IUpdatable):
 
     def _move(self, t):
         """
-        :param t: Time passed since last update in hours
-        :return: Path moved in km
+        :param t: Time passed since last update in seconds
+        :return: Path moved in meters
         """
-        # TODO: switch to meters
-        potential_distance = t * self.get_speed()
+        potential_distance = t * self.get_speed()  # meters
         moved_distance = 0
 
         while not self._navigator.is_arrived():
@@ -89,9 +89,9 @@ class Car(ICar, IUpdatable):
             next_point = self._navigator.get_next_point()
 
             vector_to_point = next_point - old_location
-            self._heading = vector_to_point.heading % 360
+            self._heading = vector_to_point.heading
 
-            if potential_distance < vector_to_point.value:
+            if potential_distance < vector_to_point.meters:
                 potential_vector = GeoVector(
                     value=potential_distance, heading=vector_to_point.heading)
                 new_location = old_location + potential_vector
@@ -99,8 +99,8 @@ class Car(ICar, IUpdatable):
                 self._navigator.set_location(new_location)
                 break
 
-            potential_distance -= vector_to_point.value
-            moved_distance += vector_to_point.value
+            potential_distance -= vector_to_point.meters
+            moved_distance += vector_to_point.meters
             self._navigator.pop_next_point()
         else:
             # arrived

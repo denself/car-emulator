@@ -4,6 +4,7 @@ from geopy.distance import great_circle
 
 
 class GeoPoint(object):
+    # precision in degrees between two points
     d = 0.000001
 
     def __init__(self, latitude=0., longitude=0.):
@@ -50,14 +51,15 @@ class GeoPoint(object):
         :rtype: GeoVector
         """
         assert isinstance(other, GeoPoint)
-        distance = great_circle(self.get_lat_lon(), other.get_lat_lon()).km
+        # Calculated distance between two points
+        distance = great_circle(self.get_lat_lon(), other.get_lat_lon())
         heading = bearing(other, self)
-        return GeoVector(distance, heading)
+        return GeoVector(distance.meters, heading)
 
     def __add__(self, other):
         assert isinstance(other, GeoVector)
-        _point = great_circle().destination(self.get_lat_lon(),
-                                            other.heading, other.value)
+        _point = great_circle().destination(
+            self.get_lat_lon(), other.heading, other.kilometers)
         return GeoPoint(_point.latitude, _point.longitude)
 
     def __eq__(self, other):
@@ -70,18 +72,32 @@ class GeoPoint(object):
 
 class GeoVector(object):
     def __init__(self, value=0., heading=0.):
-        self.value = value  # vector length in km
-        self.heading = heading  # vector angle in degrees
+        self._value = value  # vector length in m
+        self._heading = heading  # vector angle in degrees
 
     def __str__(self):
-        return 'GeoVector({:.6f}, {:.4f})'.format(self.value, self.heading)
+        return 'GeoVector({:.6f}, {:.4f})'.format(self.meters, self.heading)
+
+    @property
+    def heading(self):
+        """
+        :return: Vector heading 0..359.9 in degrees
+        """
+        return self._heading % 360
 
     @property
     def meters(self):
         """
         :return: Get vector length in meters (m)
         """
-        return self.value * 1000
+        return self._value
+
+    @property
+    def kilometers(self):
+        """
+        :return: Get vector length in kilometers (km)
+        """
+        return self._value / 1000.
 
 
 class GeoLine(object):

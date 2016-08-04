@@ -3,6 +3,7 @@ import time
 from devices.bce import BCE
 from transport.twstd import TransportFactory
 from interfaces import IUpdatable
+from utils.helpers import to_kilometers_per_hour
 
 
 class Device(IUpdatable):
@@ -58,8 +59,9 @@ class Device(IUpdatable):
         car_position = self.car.get_location()
 
         path = car_position - self.last_point
+        # time since last update in seconds
         time_passed = now - self.last_push_time
-        speed = path.value / (time_passed / 3600.)
+        speed = to_kilometers_per_hour(path.meters / time_passed)
 
         self.data['latitude'] = car_position.latitude
         self.data['longitude'] = car_position.longitude

@@ -2,17 +2,24 @@ import json
 import os
 import random
 
+import datetime
 from twisted.internet import reactor
 from twisted.python import log
 
 from interfaces import ICar, IUpdatable
 from navigator import Navigator
-from utils.geo import to_hours, GeoVector, GeoPoint
-from utils.helpers import to_meters_per_second, to_liters_per_meter
+from utils.geo import GeoVector, GeoPoint
+from utils.units_helpers import to_meters_per_second, to_liters_per_meter
 
 
 class Car(ICar, IUpdatable):
-    def __init__(self, vin, city):
+    def __init__(self, vin, city, schedule):
+        """
+
+        :param vin:
+        :param city:
+        :type schedule: utils.datehelper.Schedule
+        """
         # TODO: internal logger
         self._vin = vin
         self._saver = CarSaver(vin, self)
@@ -25,7 +32,8 @@ class Car(ICar, IUpdatable):
         self._tank_value = 50.
         self._fuel_level = data.get('fuel_level', self._tank_value)
         self._fuel_speed = to_liters_per_meter(12)
-        reactor.callLater(3, self._start)
+        self._schedule = schedule
+        self._delayed_start(3)
 
     def get_heading(self):
         return self._heading
@@ -112,11 +120,17 @@ class Car(ICar, IUpdatable):
         log.msg("Car {} arrived to destination point".format(self._vin))
         self._speed = 0
         # TODO: custom reactor
-        reactor.callLater(300, self._start)
+        self._delayed_start()
+
+    def _delayed_start(self, delay=300):
+        now = datetime.datetime.utcnow()
+        timeout = self._schedule.get_time_to_next_ride(now, delay=delay,
+                                                       precision=2)
+        reactor.callLater(timeout, self._start)
 
     def _start(self):
         if not self._navigator.build_path():
-            reactor.callLater(300, self._start)
+            self._delayed_start()
         else:
             log.msg("Car {} arrived to destination point. Fuel level: {}"
                     "".format(self._vin, self._fuel_level))

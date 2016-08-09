@@ -3,7 +3,7 @@ import time
 from devices.bce import BCE
 from transport.twstd import TransportFactory
 from interfaces import IUpdatable
-from utils.helpers import to_kilometers_per_hour
+from utils.units_helpers import to_kilometers_per_hour
 
 
 class Device(IUpdatable):

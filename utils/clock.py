@@ -1,5 +1,7 @@
 import time
 
+import datetime
+
 
 class IClock(object):
     def time(self):
@@ -12,6 +14,9 @@ class Clock(IClock):
 
     def time(self):
         return self._clock.time()
+
+    def datetime(self):
+        return datetime.datetime.utcfromtimestamp(self._clock.time())
 
 
 class HistoricalClock(IClock):

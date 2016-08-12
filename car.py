@@ -27,6 +27,7 @@ class Car(ICar, IUpdatable):
         self._navigator = Navigator(city, data.get('position'))
         self._max_speed = to_meters_per_second(60)
         self._speed = 0
+        self._moving = False
         self._heading = data.get('heading', 0)
         self._mileage = data.get('mileage', 0)
         self._tank_value = 50.
@@ -57,7 +58,7 @@ class Car(ICar, IUpdatable):
         return (self._fuel_level / self._tank_value) * 100
 
     def update(self, t):
-        if not self._navigator.is_arrived():
+        if self._moving:
             path = self._move(t)
             self._update_fuel(path)
 
@@ -90,34 +91,17 @@ class Car(ICar, IUpdatable):
         :return: Path moved in meters
         """
         potential_distance = t * self.get_speed()  # meters
-        moved_distance = 0
 
-        while not self._navigator.is_arrived():
-            old_location = self.get_location()
-            next_point = self._navigator.get_next_point()
-
-            vector_to_point = next_point - old_location
-            self._heading = vector_to_point.heading
-
-            if potential_distance < vector_to_point.meters:
-                potential_vector = GeoVector(
-                    value=potential_distance, heading=vector_to_point.heading)
-                new_location = old_location + potential_vector
-                moved_distance += potential_distance
-                self._navigator.set_location(new_location)
-                break
-
-            potential_distance -= vector_to_point.meters
-            moved_distance += vector_to_point.meters
-            self._navigator.pop_next_point()
-        else:
-            # arrived
+        moved_distance = self._navigator.move(potential_distance)
+        self._heading = self._navigator.get_heading()
+        if moved_distance and self._navigator.is_arrived():
             self._on_arrived()
 
         return moved_distance
 
     def _on_arrived(self):
         log.msg("Car {} arrived to destination point".format(self._vin))
+        self._moving = False
         self._speed = 0
         # TODO: custom reactor
         self._delayed_start()
@@ -132,8 +116,9 @@ class Car(ICar, IUpdatable):
         if not self._navigator.build_path():
             self._delayed_start()
         else:
-            log.msg("Car {} arrived to destination point. Fuel level: {}"
+            log.msg("Car {} Start moving. Fuel level: {}"
                     "".format(self._vin, self._fuel_level))
+            self._moving = True
             self._update_refuel()
             self._speed = self._max_speed
 

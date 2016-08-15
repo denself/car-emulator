@@ -103,17 +103,16 @@ class GeoVector(object):
 class GeoLine(object):
     def __init__(self):
         self._points = []
-        self._pointer = 0
 
     def __nonzero__(self):
-        return len(self._points) > self._pointer
+        return len(self._points) > 0
 
     def get(self, i=0):
-        return GeoPoint.from_reversed(*self._points[self._pointer + i])
+        return GeoPoint.from_reversed(*self._points[i])
 
     def pop_next(self):
         res = self.get()
-        self._pointer += 1
+        self._points.pop(0)
         return res
 
     def to_dict(self):
@@ -139,6 +138,9 @@ class GeoLine(object):
     def from_feature(cls, data):
         assert data['type'] == 'Feature'
         return cls.from_dict(data['geometry'])
+
+    def __len__(self):
+        return len(self._points)
 
     def __str__(self):
         return "GeoLine({}..)".format(self.get())

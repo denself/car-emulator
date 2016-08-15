@@ -4,10 +4,9 @@ import sys
 from twisted.python import log
 
 import settings
-from car import Car
 from devices.bce import BCE
-from devices.device import Device
-from devices.ips import IPS
+from entities.car import Car
+from entities.device import Device
 from loop import Loop
 from utils.datehelper import Schedule
 

@@ -82,6 +82,30 @@ class Navigator(object):
         self.set_location(point)
         return point
 
+    def evaluate(self):
+        max_analyze = 700
+        i = 1
+        point_start = self.get_location()
+        point_end = self._path.get()
+        vector = point_end - point_start
+        distance = vector.meters
+        angle = vector.heading
+        coeff = 0
+        while i < len(self._path):
+            if distance > max_analyze:
+                break
+            point_start, point_end = point_end, self._path.get(i)
+            vector = point_end - point_start
+            delta_heading = abs((vector.heading - angle)) % 360
+            angle = vector.heading
+            coeff += (max_analyze - distance) * delta_heading / (360. * max_analyze)
+
+            distance += vector.meters
+            i += 1
+        else:
+            pass
+        return min(coeff, 1)
+
     def build_path(self, point_to=None):
         """
         :param point_to: Destination point

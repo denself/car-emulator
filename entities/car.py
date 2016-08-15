@@ -9,7 +9,8 @@ from twisted.python import log
 from interfaces import ICar, IUpdatable
 from navigator import Navigator
 from utils.geo import GeoVector, GeoPoint
-from utils.units_helpers import to_meters_per_second, to_liters_per_meter
+from utils.units_helpers import to_meters_per_second, to_liters_per_meter, \
+    to_kilometers_per_hour
 
 
 class Car(ICar, IUpdatable):
@@ -25,7 +26,8 @@ class Car(ICar, IUpdatable):
         self._saver = CarSaver(vin, self)
         data = self._saver.load()
         self._navigator = Navigator(city, data.get('position'))
-        self._max_speed = to_meters_per_second(60)
+        self._max_speed = to_meters_per_second(65)
+        self._min_speed = to_meters_per_second(20)
         self._speed = 0
         self._moving = False
         self._heading = data.get('heading', 0)
@@ -40,7 +42,11 @@ class Car(ICar, IUpdatable):
         return self._heading
 
     def get_speed(self):
-        return self._speed
+        if not self._moving:
+            return 0
+        coef = self._navigator.evaluate()
+        speed = self._max_speed - (self._max_speed - self._min_speed) * coef
+        return speed
 
     def get_location(self):
         return self._navigator.get_location()
@@ -109,7 +115,7 @@ class Car(ICar, IUpdatable):
     def _delayed_start(self, delay=300):
         now = datetime.datetime.utcnow()
         timeout = self._schedule.get_time_to_next_ride(now, delay=delay,
-                                                       precision=2)
+                                                       precision=0)
         reactor.callLater(timeout, self._start)
 
     def _start(self):
